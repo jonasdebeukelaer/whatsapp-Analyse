@@ -7,15 +7,19 @@ import plotly as py
 from plotly.graph_objs import *
 py.tools.set_credentials_file(username='jonasdb', api_key='2r0kiy0eq1', stream_ids=['fs43hhoxgj', '86nsdjyshj'])
 
-
+#-------------------------------------------------------------------------#
 #-------------------------------PARAMETERS--------------------------------#
-outputMessagingPatterns = True
-ana1 = ['dayOfWeek', 'timeOfDay']
+#-------------------------------------------------------------------------#
+outputMessagingPatterns = False
+ana1 = ['Date', 'dayOfWeek', 'timeOfDay']
 ana2 = ['raw', 'volumeProportion', 'personalProportion']
-analysisType = [ana1[1], ana2[2]]
+timeAnalysisType = [ana1[1], ana2[2]]
 
+outputLanguageAnalysis = True
 
-
+#-------------------------------------------------------------------------#
+#-------------------------------------------------------------------------#
+#-------------------------------------------------------------------------#
 
 raw_text = open('WhatsApp Chat Log 19022015.txt', 'r')
 
@@ -53,7 +57,10 @@ for line in lines:
 
 
 if outputMessagingPatterns:
-	head.MessagingPatternAnalysis(messageList, eventList, nameSet, analysisType)
+	head.MessagingPatternAnalysis(messageList, eventList, nameSet, timeAnalysisType)
+
+if outputLanguageAnalysis:
+	head.LanguageAnalysis(messageList, nameSet)
 
 
 print numMessages

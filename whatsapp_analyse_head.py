@@ -1,3 +1,5 @@
+import re, string, operator
+
 import plotly as py
 from plotly.graph_objs import *
 py.tools.set_credentials_file(username='jonasdb', api_key='2r0kiy0eq1', stream_ids=['fs43hhoxgj', '86nsdjyshj'])
@@ -95,8 +97,9 @@ def MessagingPatternAnalysis(messageList, eventList, nameSet, analysisType):
 		timeX[timeIndex] += 1
 		timeXPerName[timeIndex][message.name] += 1
 
-
-	if analysisType[0] == 'dayOfWeek':
+	if analysisType[0] == 'Date':
+		fig = AnalyseByDate(messageList, eventList, nameSet, analysisType, days, x, xPerName)
+	elif analysisType[0] == 'dayOfWeek':
 		fig = AnalyseByDate(messageList, eventList, nameSet, analysisType, days, x, xPerName, daysOfWeek)
 	elif analysisType[0] == 'timeOfDay':
 		fig = AnalyseByTime(messageList, eventList, nameSet, analysisType, days, timeX, timeXPerName)
@@ -196,4 +199,43 @@ def AnalyseByTime(messageList, eventList, nameSet, analysisType, days, timeX, ti
 	fig = Figure(data=data, layout=layout)
 
 	return fig
+
+def LanguageAnalysis(messageList, nameSet):
+
+	wordCatalogue = {}
+
+	table = string.maketrans("","")
+	for message in messageList:
+
+		messageWords = message.message
+		messageWords.translate(table, string.punctuation)
+		messageWordsList = messageWords.split(' ')
+
+		for word in messageWordsList:
+			justWords = word.rstrip()
+			lowerCaseWord = justWords.lower()
+
+			if lowerCaseWord in wordCatalogue:
+				wordCatalogue[lowerCaseWord] += 1
+			else:
+				wordCatalogue[lowerCaseWord] = 1
+
+		#print wordCatalogue
+
+	sortedWordCatalogue = sorted(wordCatalogue.items(), key=operator.itemgetter(1))
+
+	for word in sortedWordCatalogue:
+		print word
+
+
+
+
+
+
+
+
+
+
+
+
 
