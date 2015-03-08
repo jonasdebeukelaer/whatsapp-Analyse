@@ -19,7 +19,6 @@ outputLanguageAnalysis = True
 
 #-------------------------------------------------------------------------#
 #-------------------------------------------------------------------------#
-#-------------------------------------------------------------------------#
 
 raw_text = open('WhatsApp Chat Log 19022015.txt', 'r')
 
@@ -61,6 +60,8 @@ if outputMessagingPatterns:
 
 if outputLanguageAnalysis:
 	head.LanguageAnalysis(messageList, nameSet)
+
+head.SpellCheckConversation(messageList, nameSet, output='raw')
 
 
 print numMessages

@@ -1,4 +1,5 @@
 import re, string, operator
+import enchant
 
 import plotly as py
 from plotly.graph_objs import *
@@ -83,7 +84,6 @@ def MessagingPatternAnalysis(messageList, eventList, nameSet, analysisType):
 	daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 	timeX = [0] * 24
-	timeXPerName = rowTemplate = dict.fromkeys(nameSet, 0)
 	timeXPerName = [dict(rowTemplate) for k in range(0, 24)]
 
 	for message in messageList:
@@ -224,13 +224,67 @@ def LanguageAnalysis(messageList, nameSet):
 
 	sortedWordCatalogue = sorted(wordCatalogue.items(), key=operator.itemgetter(1))
 
-	for word in sortedWordCatalogue:
-		print word
+	for name in nameSet:
+		_digits = re.compile('\d')
+		if not _digits.search(name):
+			firstName = name.split(' ')[0].lower()
+			print firstName, wordCatalogue[firstName]
+			if firstName == 'yasmin':
+				print '+ yas ', wordCatalogue['yas'], '=', str(wordCatalogue[firstName] + wordCatalogue['yas'])
+			if firstName == 'athavan':
+				print '+ athas ', wordCatalogue['athas'], '=', str(wordCatalogue[firstName] + wordCatalogue['athas'])
+			if firstName == 'josh':
+				print '+ jesh ', wordCatalogue['jesh'], '=', str(wordCatalogue[firstName] + wordCatalogue['jesh'])
+			if firstName == 'rob':
+				print '+ bob ', wordCatalogue['bob'], '=', str(wordCatalogue[firstName] + wordCatalogue['bob'])
 
+def SpellCheckConversation(messageList, nameSet, output='raw'):
+	d = enchant.Dict('en_GB')
+	table = string.maketrans("","")
+	miniTemplate = {'words':0, 'misspelt':0}
+	dictTemplate = dict.fromkeys(nameSet, dict())
 
+	wordStats = dict(dictTemplate)
+	for name in nameSet: wordStats[name] = dict(miniTemplate) 
 
+	for message in messageList:
+		wordList = message.message.split(' ')
+		for word in wordList:
+			cleanWord = word.rstrip()
+			wordStats[message.name]['words'] += 1
+			if cleanWord != '':
+				if not d.check(cleanWord):
+					wordNoPunctuation = cleanWord.translate(table, string.punctuation)
+					if wordNoPunctuation != '':
+						if not d.check(wordNoPunctuation) and not wordNoPunctuation[0].isupper():
+							wordStats[message.name]['misspelt'] += 1
 
+	if output == 'raw':
+		traceWords = Bar(x=list(nameSet), y=[wordStats[name]['words']-wordStats[name]['misspelt'] for name in nameSet], name='Correctly Splelt Words')
+		traceMisspelt = Bar(x=list(nameSet), y=[wordStats[name]['misspelt'] for name in nameSet], name='Misspelt Words')
+		data = Data([traceWords, traceMisspelt])
 
+		layout = Layout(
+		    title='Spelling Accuracy',
+		    xaxis=XAxis(title='Person'),
+		    yaxis=YAxis(title='Number Of Messages'),
+		    barmode='stack'
+		    )
+
+		fig = Figure(data=data, layout=layout)
+		plot_url = py.plotly.plot(fig, filename='Word-Spelling-raw', world_readable=False)
+	elif output == 'proportional':
+		trace = Bar(x=list(nameSet), y=[100.0*wordStats[name]['misspelt']/wordStats[name]['words'] for name in nameSet])
+		data = Data([trace])
+
+		layout = Layout(
+		    title='Spelling Mistake Frequency',
+		    xaxis=XAxis(title='Person'),
+		    yaxis=YAxis(title='Misspelt Words (%)'),
+		    )
+
+		fig = Figure(data=data, layout=layout)
+		plot_url = py.plotly.plot(fig, filename='Word-Spelling-proportion', world_readable=False)
 
 
 
