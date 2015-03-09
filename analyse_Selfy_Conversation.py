@@ -10,12 +10,13 @@ py.tools.set_credentials_file(username='jonasdb', api_key='2r0kiy0eq1', stream_i
 #-------------------------------------------------------------------------#
 #-------------------------------PARAMETERS--------------------------------#
 #-------------------------------------------------------------------------#
-outputMessagingPatterns = False
-ana1 = ['Date', 'dayOfWeek', 'timeOfDay']
+outputMessagingPatterns = True
+ana1 = ['Date', 'dayOfWeek', 'timeOfDay', 'weekHeatmap']
 ana2 = ['raw', 'volumeProportion', 'personalProportion']
-timeAnalysisType = [ana1[1], ana2[2]]
+timeAnalysisType = [ana1[3], ana2[2]]
 
-outputLanguageAnalysis = True
+outputLanguageAnalysis = False
+outputSpellingAccuracy = False
 
 #-------------------------------------------------------------------------#
 #-------------------------------------------------------------------------#
@@ -61,7 +62,8 @@ if outputMessagingPatterns:
 if outputLanguageAnalysis:
 	head.LanguageAnalysis(messageList, nameSet)
 
-head.SpellCheckConversation(messageList, nameSet, output='raw')
+if outputSpellingAccuracy:
+	head.SpellCheckConversation(messageList, nameSet, output='raw')
 
 
 print numMessages

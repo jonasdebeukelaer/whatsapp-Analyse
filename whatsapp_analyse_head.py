@@ -77,6 +77,7 @@ def MessagingPatternAnalysis(messageList, eventList, nameSet, analysisType):
 	firstDate = messageList[0].date.date()
 	lastDate = messageList[len(messageList)-1].date.date()
 	days = (lastDate - firstDate).days
+	numberOfWeeks = int(1.0 * days / 7)
 
 	x = [0] * int(days)
 	rowTemplate = dict.fromkeys(nameSet, 0)
@@ -85,6 +86,9 @@ def MessagingPatternAnalysis(messageList, eventList, nameSet, analysisType):
 
 	timeX = [0] * 24
 	timeXPerName = [dict(rowTemplate) for k in range(0, 24)]
+
+	weekDictTemplate = [[0.0 for i in range(24)] for j in range(7)]
+	dateTimeX = weekDictTemplate
 
 	for message in messageList:
 		#SORT BY DATE/day/month
@@ -97,15 +101,20 @@ def MessagingPatternAnalysis(messageList, eventList, nameSet, analysisType):
 		timeX[timeIndex] += 1
 		timeXPerName[timeIndex][message.name] += 1
 
+		dateTimeX[index][timeIndex] += (1.0 / numberOfWeeks)
+
+
 	if analysisType[0] == 'Date':
 		fig = AnalyseByDate(messageList, eventList, nameSet, analysisType, days, x, xPerName)
 	elif analysisType[0] == 'dayOfWeek':
 		fig = AnalyseByDate(messageList, eventList, nameSet, analysisType, days, x, xPerName, daysOfWeek)
 	elif analysisType[0] == 'timeOfDay':
 		fig = AnalyseByTime(messageList, eventList, nameSet, analysisType, days, timeX, timeXPerName)
+	elif analysisType[0] == 'weekHeatmap':
+		CreateWeekHeatmapActivity(dateTimeX)
 
-
-	unique_url = py.plotly.plot(fig, filename=fig['layout']['title'])
+	if analysisType[0] != 'weekHeatmap':
+		unique_url = py.plotly.plot(fig, filename=fig['layout']['title'], world_readable=False)
 
 		
 
@@ -200,6 +209,29 @@ def AnalyseByTime(messageList, eventList, nameSet, analysisType, days, timeX, ti
 
 	return fig
 
+def CreateWeekHeatmapActivity(dateTimeX):
+
+	dateTimeX1decimal = list()
+
+	for day in dateTimeX:
+		dateTimeX1decimal.append(['%.1f' % value for value in day])
+
+	heatmap = Heatmap(
+        z=dateTimeX1decimal,
+        y=['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+        x=[str(k) + ':00' for k in range(0, 23)],
+        colorscale='Greens' #Greys
+    	)
+
+	layout = Layout(
+	    title='Average Weekly Activity'
+	    )
+
+	data = Data([heatmap])
+
+	fig = Figure(data=data, layout=layout)
+	plot_url = py.plotly.plot(fig, filename='messaging-activity-week-and-time', world_readable=False)
+
 def LanguageAnalysis(messageList, nameSet):
 
 	wordCatalogue = {}
@@ -258,15 +290,14 @@ def SpellCheckConversation(messageList, nameSet, output='raw'):
 					if wordNoPunctuation != '':
 						if not d.check(wordNoPunctuation) and not wordNoPunctuation[0].isupper():
 							wordStats[message.name]['misspelt'] += 1
-
+	firstNames = [name.split(' ')[0] for name in nameSet]
 	if output == 'raw':
-		traceWords = Bar(x=list(nameSet), y=[wordStats[name]['words']-wordStats[name]['misspelt'] for name in nameSet], name='Correctly Splelt Words')
-		traceMisspelt = Bar(x=list(nameSet), y=[wordStats[name]['misspelt'] for name in nameSet], name='Misspelt Words')
+		traceWords = Bar(x=firstNames, y=[wordStats[name]['words']-wordStats[name]['misspelt'] for name in nameSet], name='Correctly Spelt Words')
+		traceMisspelt = Bar(x=firstNames, y=[wordStats[name]['misspelt'] for name in nameSet], name='Misspelt Words')
 		data = Data([traceWords, traceMisspelt])
 
 		layout = Layout(
 		    title='Spelling Accuracy',
-		    xaxis=XAxis(title='Person'),
 		    yaxis=YAxis(title='Number Of Messages'),
 		    barmode='stack'
 		    )
@@ -274,12 +305,11 @@ def SpellCheckConversation(messageList, nameSet, output='raw'):
 		fig = Figure(data=data, layout=layout)
 		plot_url = py.plotly.plot(fig, filename='Word-Spelling-raw', world_readable=False)
 	elif output == 'proportional':
-		trace = Bar(x=list(nameSet), y=[100.0*wordStats[name]['misspelt']/wordStats[name]['words'] for name in nameSet])
+		trace = Bar(x=firstNames, y=[100.0*wordStats[name]['misspelt']/wordStats[name]['words'] for name in nameSet])
 		data = Data([trace])
 
 		layout = Layout(
 		    title='Spelling Mistake Frequency',
-		    xaxis=XAxis(title='Person'),
 		    yaxis=YAxis(title='Misspelt Words (%)'),
 		    )
 
